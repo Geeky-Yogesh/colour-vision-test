@@ -25,3 +25,11 @@ def init_session_state():
         st.session_state.ishihara_current_index = 0
     if 'test_results' not in st.session_state:
         st.session_state.test_results = []
+    
+    # New variables for random ishihara test
+    if 'ishihara_current_round' not in st.session_state:
+        st.session_state.ishihara_current_round = 0
+    if 'ishihara_shown_values' not in st.session_state:
+        st.session_state.ishihara_shown_values = []
+    if 'results_saved' not in st.session_state:
+        st.session_state.results_saved = False

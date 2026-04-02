@@ -1,213 +1,214 @@
-"""
-Test Components - Ishihara 
-Test Interface Components
-"""
-
 import streamlit as st
 import plotly.graph_objects as go
-from .colour_vision_test import ColourVisionTest
-import os
+import random
 from datetime import datetime
+from .colour_vision_test import ColourVisionTest
 
 def ishihara_test():
-    """Ishihara plates test"""
-    st.title("🔢 Ishihara Plates Test")
-    st.markdown("---")
+    """Ishihara test with dynamic random numbers and high-density rendering"""
+    st.title("🔢 Random Ishihara Plates Test")
     
-    # Initialize random plates if not already done
-    if 'ishihara_random_plates' not in st.session_state:
-        import random
-        all_plates = list(range(8))  # Plates 0-7
-        st.session_state.ishihara_random_plates = random.sample(all_plates, 8)
-        st.session_state.ishihara_current_index = 0
+    # Configuration
+    TOTAL_ROUNDS = 8 
     
-    if st.session_state.ishihara_current_index >= 8:
-        # Show results
-        show_ishihara_results()
+    # 1. Check if test is finished
+    if st.session_state.ishihara_current_round >= TOTAL_ROUNDS:
+        show_random_ishihara_results(TOTAL_ROUNDS)
         return
+
+    curr_round = st.session_state.ishihara_current_round
     
-    # Progress bar
-    progress = (st.session_state.ishihara_current_index + 1) / 8
-    st.progress(progress)
-    st.write(f"Plate {st.session_state.ishihara_current_index + 1} of 8")
+    # 2. Progress UI
+    st.progress((curr_round + 1) / TOTAL_ROUNDS)
+    st.write(f"### Plate {curr_round + 1} of {TOTAL_ROUNDS}")
+
+    # 3. Generate Random Number for this round (if not already generated)
+    if len(st.session_state.ishihara_shown_values) <= curr_round:
+        # Generate a random number 1-99
+        target_num = random.randint(1, 99)
+        st.session_state.ishihara_shown_values.append(target_num)
     
-    # Get current random plate
-    current_plate_num = st.session_state.ishihara_random_plates[st.session_state.ishihara_current_index]
-    plate_info = ColourVisionTest.get_ishihara_plate(current_plate_num)
-    st.subheader(plate_info["description"])
+    target_number = st.session_state.ishihara_shown_values[curr_round]
+
+    # 4. Generate the High-Density Dot Pattern
+    bg_dots, num_dots = ColourVisionTest.create_dot_pattern(target_number)
     
-    # Create visual representation - try image first, fallback to generated pattern
-    image_path = ColourVisionTest.get_ishihara_plate_image(current_plate_num)
-    use_generated_pattern = False
+    fig = go.Figure()
+
+    # Draw Background Trace
+    bx, by, bs, bc = zip(*bg_dots)
+    fig.add_trace(go.Scatter(
+        x=bx, y=by, mode='markers', 
+        marker=dict(size=bs, color=bc, line=dict(width=0)), 
+        hoverinfo='none'
+    ))
     
-    if image_path and os.path.exists(image_path):
-        # Display actual image
-        st.image(image_path, width=400, use_container_width=False)
-    else:
-        # Fallback to generated dot pattern
-        use_generated_pattern = True
-        background_dots, number_dots = ColourVisionTest.create_dot_pattern(current_plate_num)
+    # Draw Number Trace
+    nx, ny, ns, nc = zip(*num_dots)
+    fig.add_trace(go.Scatter(
+        x=nx, y=ny, mode='markers', 
+        marker=dict(size=ns, color=nc, line=dict(width=0)), 
+        hoverinfo='none'
+    ))
     
-    # Create scatter plot for the plate (only if using generated pattern)
-    if use_generated_pattern:
-        fig = go.Figure()
-        
-        # Add background dots
-        if background_dots:
-            bg_x, bg_y, bg_sizes, bg_colors = zip(*background_dots)
-            fig.add_trace(go.Scatter(
-                x=bg_x, y=bg_y,
-                mode='markers',
-                marker=dict(
-                    size=bg_sizes,
-                    color=bg_colors,
-                    line=dict(width=0)
-                ),
-                name='Background',
-                hoverinfo='none'
-            ))
-        
-        # Add number dots
-        if number_dots:
-            num_x, num_y, num_sizes, num_colors = zip(*number_dots)
-            fig.add_trace(go.Scatter(
-                x=num_x, y=num_y,
-                mode='markers',
-                marker=dict(
-                    size=num_sizes,
-                    color=num_colors,
-                    line=dict(width=0)
-                ),
-                name='Number',
-                hoverinfo='none'
-            ))
-        
-        fig.update_layout(
-            width=400,
-            height=400,
-            showlegend=False,
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            plot_bgcolor='white',
-            margin=dict(l=20, r=20, t=20, b=20)
-        )
-        
-        st.plotly_chart(fig, width='content')
+    # 5. Fixed Layout to remove distortion and white space
+    fig.update_layout(
+        width=500, height=500,
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(visible=False, range=[0, 100], fixedrange=True),
+        yaxis=dict(visible=False, range=[0, 100], fixedrange=True),
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
     
-    # Answer input
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        answer = st.text_input("What number do you see?", key=f"answer_{st.session_state.ishihara_current_index}", max_chars=3)
+    # Display the plate
+    st.plotly_chart(fig, config={'displayModeBar': False}, use_container_width=False)
+
+    # 6. Input Form
+    with st.form(key=f"ishihara_round_{curr_round}"):
+        st.write("What number is hidden in the plate?")
+        user_input = st.text_input("Enter number:", key=f"input_{curr_round}", placeholder="e.g. 12")
         
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            if st.button("Next", type="primary"):
-                # Store answer with the actual plate number for correct analysis
-                answer_entry = {
-                    'plate_number': current_plate_num,
-                    'answer': answer.strip()
-                }
-                st.session_state.ishihara_answers.append(answer_entry)
-                st.session_state.ishihara_current_index += 1
-                st.rerun()
-        
-        with col2:
-            if st.button("Skip"):
-                # Store skipped answer
-                answer_entry = {
-                    'plate_number': current_plate_num,
-                    'answer': ""
-                }
-                st.session_state.ishihara_answers.append(answer_entry)
-                st.session_state.ishihara_current_index += 1
-                st.rerun()
-        
-        with col3:
-            if st.button("Reset Test"):
-                st.session_state.ishihara_current_index = 0
-                st.session_state.ishihara_answers = []
-                # Generate new random order
-                import random
-                all_plates = list(range(8))
-                st.session_state.ishihara_random_plates = random.sample(all_plates, 8)
-                st.rerun()
-    
-    # Back button
-    if st.button("← Back to Menu"):
-        st.session_state.current_test = None
+        col1, col2 = st.columns(2)
+        if col1.form_submit_button("Submit & Next", use_container_width=True):
+            st.session_state.ishihara_answers.append(user_input)
+            st.session_state.ishihara_current_round += 1
+            st.rerun()
+            
+        if col2.form_submit_button("I can't see a number", use_container_width=True):
+            st.session_state.ishihara_answers.append("None")
+            st.session_state.ishihara_current_round += 1
+            st.rerun()
+
+    if st.button("Reset Test"):
+        st.session_state.ishihara_current_round = 0
+        st.session_state.ishihara_answers = []
+        st.session_state.ishihara_shown_values = []
         st.rerun()
 
-def show_ishihara_results():
-    """Show Ishihara test results"""
-    st.subheader("🎯 Test Results")
+def show_random_ishihara_results(total_rounds):
+    """Calculate and display results for the random test"""
+    st.subheader(" Test Summary")
     
-    # Convert answers back to simple list for analysis
-    simple_answers = []
-    for answer_entry in st.session_state.ishihara_answers:
-        simple_answers.append(answer_entry['answer'])
+    shown = st.session_state.ishihara_shown_values
+    answers = st.session_state.ishihara_answers
     
-    # Analyze results using real Ishihara data
-    from .ishihara_data import analyze_results
-    results = analyze_results(simple_answers)
+    correct_count = 0
+    detailed_data = []
     
-    if not results:
-        st.error("Error analyzing results")
-        return
+    for i in range(len(answers)):
+        u_ans = str(answers[i]).strip()
+        s_val = str(shown[i]).strip()
+        
+        # Robust comparison (int comparison to handle '08' vs '8')
+        is_match = False
+        try:
+            if int(u_ans) == int(s_val):
+                is_match = True
+        except ValueError:
+            if u_ans.lower() == s_val.lower():
+                is_match = True
+                
+        if is_match:
+            correct_count += 1
+            
+        detailed_data.append({
+            "Plate": i + 1,
+            "Shown": s_val,
+            "Your Answer": u_ans if u_ans else "(blank)",
+            "Status": " Correct" if is_match else " Incorrect"
+        })
+
+    accuracy = (correct_count / total_rounds) * 100
     
-    # Display result
-    result_color = "green" if "Normal" in results["result"] else "orange" if "Mild" in results["result"] else "red"
-    st.markdown(f"### <span style='color: {result_color}'>{results['result']}</span>", unsafe_allow_html=True)
-    
-    # Score
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Score", f"{results['correct_count']}/{results['total_count']}")
-    
-    with col2:
-        st.metric("Percentage", f"{results['percentage']:.1f}%")
-    
-    with col3:
-        st.metric("Status", results["result"])
-    
-    # Detailed results with plate order info
-    st.subheader("Detailed Results")
-    detailed_with_order = []
-    for i, (detail, answer_entry) in enumerate(zip(results["detailed_results"], st.session_state.ishihara_answers)):
-        detail_with_order = detail.copy()
-        detail_with_order["Plate Order"] = f"Plate {answer_entry['plate_number'] + 1}"
-        detailed_with_order.append(detail_with_order)
-    
-    import pandas as pd
-    df = pd.DataFrame(detailed_with_order)
-    st.dataframe(df, width='stretch')
-    
-    # Save results
-    result_entry = {
-        "test_type": "Ishihara Plates",
-        "result": results["result"],
-        "percentage": results["percentage"],
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "details": f"{results['correct_count']}/{results['total_count']} correct"
-    }
-    st.session_state.test_results.append(result_entry)
-    
-    # Action buttons
+    # Visual metrics
     col1, col2 = st.columns(2)
+    col1.metric("Correct Answers", f"{correct_count} / {total_rounds}")
+    col2.metric("Accuracy", f"{accuracy:.1f}%")
+
+    # Diagnosis logic
+    if accuracy >= 85:
+        diagnosis = "Normal Colour Vision"
+        st.success(f"Result: {diagnosis}")
+    elif accuracy >= 60:
+        diagnosis = "Mild Colour Vision Deficiency"
+        st.warning(f"Result: {diagnosis}")
+    else:
+        diagnosis = "Significant Colour Vision Deficiency"
+        st.error(f"Result: {diagnosis}")
+
+    # Detailed Table
+    st.table(detailed_data)
+
+    # Save to session history (only once)
+    if not st.session_state.results_saved:
+        st.session_state.test_results.append({
+            "test_type": "Random Ishihara",
+            "result": diagnosis,
+            "score": f"{accuracy:.1f}%",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
+        st.session_state.results_saved = True
+
+    if st.button("Finish and Back to Menu"):
+        st.session_state.ishihara_current_round = 0
+        st.session_state.ishihara_answers = []
+        st.session_state.ishihara_shown_values = []
+        st.session_state.results_saved = False
+        st.session_state.current_test = None
+        st.session_state.test_results = []
+        st.rerun()
+
+def farnsworth_test():
+    """Logic for the Farnsworth D-15 test"""
+    st.title(" Farnsworth D-15 Test")
     
-    with col1:
-        if st.button("🔄 Retake Test", type="primary"):
-            st.session_state.ishihara_current_index = 0
-            st.session_state.ishihara_answers = []
-            # Generate new random order
-            import random
-            all_plates = list(range(8))
-            st.session_state.ishihara_random_plates = random.sample(all_plates, 8)
-            st.rerun()
+    ref_color, shuffled = ColourVisionTest.get_farnsworth_colors()
     
-    with col2:
-        if st.button("← Back to Menu"):
-            st.session_state.current_test = None
-            st.rerun()
+    st.info("Arrange the colors to form a smooth gradient starting from the Reference Red.")
+    
+    # Display Reference
+    st.markdown("### 1. Reference Color")
+    st.markdown(f'<div style="background:{ref_color["hex"]}; width:60px; height:60px; border-radius:10px; border:3px solid white; display:flex; align-items:center; justify-content:center; color:white; font-size:10px;">START</div>', unsafe_allow_html=True)
+    
+    # Color Selection UI
+    st.markdown("### 2. Arrange Remaining Colors")
+    user_choices = []
+    names = [c['name'] for c in shuffled]
+    
+    for i in range(len(shuffled)):
+        choice = st.selectbox(f"Position {i+2}", ["-- Select --"] + names, key=f"farnsworth_pos_{i}")
+        user_choices.append(choice)
+
+    if st.button("Analyze Arrangement", type="primary"):
+        if "-- Select --" in user_choices or len(set(user_choices)) < len(user_choices):
+            st.error("Please select all colors uniquely (no duplicates).")
+        else:
+            # Map names to hex, including reference
+            user_hex_order = [ref_color['hex']] + [next(c['hex'] for c in shuffled if c['name'] == name) for name in user_choices]
+            correct_hex_order = [ref_color['hex']] + [c['hex'] for c in shuffled] # Simplification for logic
+            
+            res = ColourVisionTest.analyze_farnsworth_results(user_hex_order, correct_hex_order)
+            
+            st.subheader(f"Result: {res['result']}")
+            st.write(f"Precision Score: {res['score']}%")
+            
+            if not st.session_state.results_saved:
+                st.session_state.test_results.append({
+                    "test_type": "Farnsworth D-15",
+                    "result": res["result"],
+                    "score": f"{res['score']}%",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                })
+                st.session_state.results_saved = True
+            
+            if st.button("Finish"):
+                st.session_state.results_saved = False
+                st.session_state.current_test = None
+                st.session_state.test_results = []
+                st.rerun()
+
+    if st.button("Cancel"):
+        st.session_state.current_test = None
+        st.rerun()
