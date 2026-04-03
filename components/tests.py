@@ -71,12 +71,12 @@ def ishihara_test():
         user_input = st.text_input("Enter number:", key=f"input_{curr_round}", placeholder="e.g. 12")
         
         col1, col2 = st.columns(2)
-        if col1.form_submit_button("Submit & Next", use_container_width=True):
+        if col1.form_submit_button("Submit & Next", width='stretch'):
             st.session_state.ishihara_answers.append(user_input)
             st.session_state.ishihara_current_round += 1
             st.rerun()
             
-        if col2.form_submit_button("I can't see a number", use_container_width=True):
+        if col2.form_submit_button("I can't see a number", width='stretch'):
             st.session_state.ishihara_answers.append("None")
             st.session_state.ishihara_current_round += 1
             st.rerun()

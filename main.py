@@ -7,24 +7,7 @@ import streamlit as st
 from components.ui import main_menu
 from components.tests import ishihara_test
 from components.results import show_results
-from components.config import configure_page
-
-def initialize_session_state():
-    """Initialize session state variables"""
-    if 'current_test' not in st.session_state:
-        st.session_state.current_test = None
-    
-    if 'test_results' not in st.session_state:
-        st.session_state.test_results = []
-    
-    if 'ishihara_answers' not in st.session_state:
-        st.session_state.ishihara_answers = []
-    
-    if 'ishihara_random_plates' not in st.session_state:
-        st.session_state.ishihara_random_plates = []
-    
-    if 'ishihara_current_index' not in st.session_state:
-        st.session_state.ishihara_current_index = 0
+from components.config import configure_page, init_session_state
 
 def sidebar_navigation():
     """Create sidebar navigation"""
@@ -33,21 +16,20 @@ def sidebar_navigation():
         st.markdown("---")
         
         # Navigation buttons
-        if st.button("🏠 Home", use_container_width=True):
+        if st.button("🏠 Home", width='stretch'):
             st.session_state.current_test = None
             st.rerun()
         
-        if st.button("🔢 Ishihara Test", use_container_width=True):
+        if st.button("🔢 Ishihara Test", width='stretch'):
             st.session_state.current_test = "ishihara"
-            st.session_state.ishihara_current_index = 0
+            # Reset test state for new test
+            st.session_state.ishihara_current_round = 0
             st.session_state.ishihara_answers = []
-            # Generate new random order
-            import random
-            all_plates = list(range(8))
-            st.session_state.ishihara_random_plates = random.sample(all_plates, 8)
+            st.session_state.ishihara_shown_values = []
+            st.session_state.results_saved = False
             st.rerun()
         
-        if st.button("📊 Results", use_container_width=True):
+        if st.button("📊 Results", width='stretch'):
             st.session_state.current_test = "results"
             st.rerun()
         
@@ -62,10 +44,10 @@ def sidebar_navigation():
         """)
         
         # Clear session button
-        if st.button("🗑️ Clear Session", use_container_width=True):
+        if st.button("🗑️ Clear Session", width='stretch'):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
-            initialize_session_state()
+            init_session_state()
             st.rerun()
         
         st.markdown("---")
@@ -76,7 +58,7 @@ def sidebar_navigation():
         **Colour Vision Test App**
         
         This application provides:
-        - Ishihara Plates Test
+        - Random Ishihara Plates Test
         - Results tracking
         
         **Version:** 1.0.0
@@ -90,8 +72,8 @@ def main():
     # Configure page settings
     configure_page()
     
-    # Initialize session state
-    initialize_session_state()
+    # Initialize session state using the proper function from config
+    init_session_state()
     
     # Create sidebar navigation
     sidebar_navigation()
