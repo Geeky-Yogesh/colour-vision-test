@@ -10,13 +10,7 @@ A Python application that implements colour vision tests to help detect colour v
 - Detects red-green colour blindness
 - Provides detailed analysis of results
 
-### 2. Farnsworth D-15 Test
-- Colour arrangement test
-- Users arrange coloured caps in the correct order
-- Detects various types of colour vision deficiencies
-- Measures arrangement accuracy
-
-### 3. Results Management
+### 2. Results Management
 - Stores test results with timestamps
 - View detailed results and analysis
 - Track performance over multiple tests
@@ -45,9 +39,8 @@ streamlit run main.py
 ## How to Use
 
 ### Starting the Application
-Run the script and you'll see the main menu with three options:
+Run the script and you'll see the main menu with two options:
 - Ishihara Plates Test
-- Farnsworth D-15 Test
 - View Results
 
 ### Ishihara Plates Test
@@ -58,13 +51,6 @@ Run the script and you'll see the main menu with three options:
 5. Skip plates if you cannot see any number
 6. View your results at the end
 
-### Farnsworth D-15 Test
-1. Click "Farnsworth D-15 Test"
-2. Click on a colour cap to select it
-3. Click on an empty slot to place it
-4. Arrange all colours in the correct order from the reference colour
-5. Click "Check Results" to see your score
-6. Use "Reset" to try again
 
 ### Viewing Results
 - Click "View Results" from the main menu
@@ -78,10 +64,6 @@ Run the script and you'll see the main menu with three options:
 - **Mild Colour Vision Deficiency**: 40-79% correct answers
 - **Significant Colour Vision Deficiency**: <40% correct answers
 
-### Farnsworth D-15 Test Results
-- **Normal Colour Vision**: 90%+ arrangement accuracy
-- **Mild Colour Vision Deficiency**: 70-89% arrangement accuracy
-- **Significant Colour Vision Deficiency**: <70% arrangement accuracy
 
 ## Important Notes
 
@@ -111,7 +93,7 @@ Colour-Vision/
 - **main.py**: Application entry point and main logic
 - **ColourVisionTest**: Core test algorithms and color generation
 - **UI Components**: Streamlit-based interface elements
-- **Test Components**: Ishihara and Farnsworth test implementations
+- **Test Components**: Ishihara test implementation
 - **Results Component**: Data visualization and analysis
 
 ### Technology Stack
