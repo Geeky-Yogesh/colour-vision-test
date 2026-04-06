@@ -63,22 +63,26 @@ class ColourVisionTest:
             points = ColourVisionTest._get_large_digit_points(digit)
             
             for bx, by in points:
-                # Add fewer dots for less density (more challenging)
+                # Add more dots for better density and clarity
                 for _ in range(3):  # Reduced from 8 to 3 for less density
-                    x = bx + offset_x + random.uniform(-2, 2)  
+                    x = bx + offset_x + random.uniform(-2, 2)  # Reduced randomness for cleaner shapes
                     y = by + random.uniform(-2, 2)
                     
                     # Ensure dot stays inside the circular plate
                     if math.sqrt((x-50)**2 + (y-50)**2) < RADIUS:
-                        # Better Ishihara-style red/orange colors with higher contrast
-                        color = random.choice([
-                            '#FF0000',  # Pure Red
-                            '#DC143C',  # Crimson
-                            '#B22222',  # Fire Brick
-                            '#FF4500',  # Orange Red
-                            '#FF6347',  # Tomato
-                            '#CD5C5C'   # Indian Red
-                        ])
+                        # Use different red shades for different digits to improve separation
+                        if i == 0:  # First digit
+                            color = random.choice([
+                                '#FF0000',  # Pure Red
+                                '#DC143C',  # Crimson
+                                '#B22222',  # Fire Brick
+                            ])
+                        else:  # Second digit
+                            color = random.choice([
+                                '#FF4500',  # Orange Red
+                                '#FF6347',  # Tomato
+                                '#CD5C5C'   # Indian Red
+                            ])
                         number_dots.append((x, y, random.uniform(3, 6), color))  # Smaller dots
         
         return background_dots, number_dots
@@ -117,10 +121,10 @@ class ColourVisionTest:
                 [0,1,1,1,0]
             ],
             '4': [
-                [0,0,1,1,0],
-                [0,1,0,1,0],
-                [0,0,0,1,0],
-                [0,0,1,1,0],
+                [1,0,0,1,0],
+                [1,0,0,1,0],
+                [1,0,0,1,0],
+                [1,1,1,1,1],
                 [0,0,0,1,0],
                 [0,0,0,1,0],
                 [0,0,0,1,0]
