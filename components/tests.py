@@ -120,7 +120,7 @@ def show_random_ishihara_results(total_rounds):
             "Status": " Correct" if is_match else " Incorrect"
         })
 
-    accuracy = (correct_count / total_rounds) * 100
+    accuracy = (correct_count / total_rounds) * 100 if total_rounds > 0 else 0
     
     # Visual metrics
     col1, col2 = st.columns(2)
