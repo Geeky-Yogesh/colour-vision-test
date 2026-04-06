@@ -63,7 +63,7 @@ def ishihara_test():
     )
     
     # Display the plate
-    st.plotly_chart(fig, config={'displayModeBar': False}, use_container_width=False)
+    st.plotly_chart(fig, config={'displayModeBar': False}, width='content')
 
     # 6. Input Form
     with st.form(key=f"ishihara_round_{curr_round}"):
