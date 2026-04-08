@@ -58,7 +58,7 @@ class ColourVisionTest:
         num_str = str(number)
         for i, digit in enumerate(num_str):
             # Spacing for double digits
-            offset_x = -16 if len(num_str) > 1 and i == 0 else 16 if len(num_str) > 1 else 0
+            offset_x = -20 if len(num_str) > 1 and i == 0 else 20 if len(num_str) > 1 else 0
             
             points = ColourVisionTest._get_large_digit_points(digit)
             
@@ -189,10 +189,10 @@ class ColourVisionTest:
         all_points = []
         
         # Convert grid to coordinates
-        # Each cell is 8x8 units, positioned to fit within 25-75 range
+        # Each cell is 6x6 units, positioned to fit within 25-75 range
         start_x = 30
         start_y = 25
-        cell_size = 8
+        cell_size = 6
         
         for row_idx, row in enumerate(pattern):
             for col_idx, cell in enumerate(row):
