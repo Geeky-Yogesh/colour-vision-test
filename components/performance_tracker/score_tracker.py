@@ -103,9 +103,23 @@ class ScoreTracker:
         # Calculate session statistics
         if current_session['scores']:
             scores = [s['score'] for s in current_session['scores']]
+            session_percentage = (sum(scores) / len(scores)) * 100
             current_session['average_score'] = sum(scores) / len(scores)
             current_session['max_score'] = max(scores)
             current_session['min_score'] = min(scores)
+            
+            # Add overall test percentage as a summary score
+            summary_score = {
+                'timestamp': datetime.now(),
+                'score': session_percentage / 100,  # Convert to 0-1 for consistency
+                'details': {
+                    'test_type': 'session_summary',
+                    'total_questions': len(scores),
+                    'correct_answers': sum(scores),
+                    'percentage': session_percentage
+                }
+            }
+            current_session['scores'].append(summary_score)
         
         # Add to sessions list
         st.session_state.performance_data['sessions'].append(current_session)
@@ -143,12 +157,15 @@ class ScoreTracker:
         rows = []
         for session in data['sessions']:
             for score_entry in session['scores']:
+                # Convert individual score to percentage for visualization
+                score_percentage = score_entry['score'] * 100 if isinstance(score_entry['score'], (int, float)) and score_entry['score'] <= 1 else score_entry['score']
+                
                 rows.append({
                     'session_id': session['session_id'],
                     'test_type': session['test_type'],
                     'timestamp': score_entry['timestamp'],
-                    'score': score_entry['score'],
-                    'session_average': session.get('average_score', 0)
+                    'score': score_percentage,
+                    'session_average': session.get('average_score', 0) * 100 if session.get('average_score', 0) <= 1 else session.get('average_score', 0)
                 })
         
         return pd.DataFrame(rows)
