@@ -7,7 +7,7 @@ import streamlit as st
 from components.ui import main_menu
 from components.tests import ishihara_test
 from components.results import show_results
-from components.webcam_test import webcam_test
+from components.webcam import webcam_test
 from components.distance_guide import distance_settings_page
 from components.config import configure_page, init_session_state
 
