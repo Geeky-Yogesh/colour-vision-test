@@ -89,29 +89,49 @@ class ResultInterpreter:
     @staticmethod
     def interpret_overall_performance() -> Dict[str, Any]:
         """Interpret overall performance across all tests"""
+        # Ensure performance data is initialized
+        if 'performance_data' not in st.session_state:
+            from .score_tracker import ScoreTracker
+            ScoreTracker.initialize_session()
+        
         data = st.session_state.performance_data
         
-        if data['total_tests'] == 0:
+        # Check if there are any completed sessions with actual scores
+        completed_sessions = [s for s in data['sessions'] if s.get('completed', False)]
+        
+        # Count actual scores from completed sessions
+        actual_scores = []
+        for session in completed_sessions:
+            if session.get('scores'):
+                actual_scores.extend([s['score'] for s in session['scores']])
+        
+        # If no actual test data, return no_data status
+        if len(actual_scores) == 0:
             return {
                 'status': 'no_data',
                 'message': 'No test data available for interpretation.',
-                'color': 'gray'
+                'color': 'gray',
+                'average_score': 0,
+                'total_tests': 0,
+                'best_score': 0
             }
         
-        avg_score = data['average_score']
+        # Calculate average from actual scores and convert to percentage
+        avg_score = sum(actual_scores) / len(actual_scores)
+        avg_percentage = avg_score * 100
         
         # Determine overall category
-        if avg_score >= 85:
+        if avg_percentage >= 85:
             category = 'excellent'
             status = "Excellent Overall Performance"
             message = "Outstanding performance across all test types!"
             color = 'green'
-        elif avg_score >= 70:
+        elif avg_percentage >= 70:
             category = 'good'
             status = "Good Overall Performance"
             message = "Strong performance with room for continued improvement."
             color = 'blue'
-        elif avg_score >= 50:
+        elif avg_percentage >= 50:
             category = 'moderate'
             status = "Moderate Overall Performance"
             message = "Decent performance. Regular practice recommended."
@@ -128,8 +148,8 @@ class ResultInterpreter:
             'description': message,
             'color': color,
             'average_score': avg_score,
-            'total_tests': data['total_tests'],
-            'best_score': data['best_score']
+            'total_tests': len(actual_scores),
+            'best_score': max(actual_scores)
         }
     
     @staticmethod

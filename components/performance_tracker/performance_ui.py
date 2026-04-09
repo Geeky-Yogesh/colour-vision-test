@@ -74,6 +74,8 @@ class PerformanceUI:
                 st.metric("Best Score", f"{overall['best_score']:.1f}%")
                 st.metric("Average", f"{overall['average_score']:.1f}%")
                 st.metric("Total Tests", overall['total_tests'])
+        else:
+            st.info("No test data available yet. Complete some tests to see your performance analysis!")
         
         # Recent performance
         st.subheader("Recent Performance")
