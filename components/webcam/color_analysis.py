@@ -95,7 +95,7 @@ class ColorAnalysis:
                     xaxis_title="Colors",
                     yaxis_title="Percentage (%)"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="color_distribution_chart")
             
             # Test results based on mode
             if test_mode == "Color Recognition":

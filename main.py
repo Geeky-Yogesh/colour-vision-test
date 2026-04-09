@@ -9,6 +9,7 @@ from components.tests import ishihara_test
 from components.results import show_results
 from components.webcam import webcam_test
 from components.distance_guide import distance_settings_page
+from components.performance_tracker import performance_tracker
 from components.config import configure_page, init_session_state
 
 def sidebar_navigation():
@@ -41,6 +42,10 @@ def sidebar_navigation():
         
         if st.button(" Distance Settings", width='stretch'):
             st.session_state.current_test = "distance"
+            st.rerun()
+        
+        if st.button(" Performance Tracker", width='stretch'):
+            st.session_state.current_test = "performance"
             st.rerun()
         
         st.markdown("---")
@@ -99,6 +104,8 @@ def main():
         webcam_test()
     elif st.session_state.current_test == "distance":
         distance_settings_page()
+    elif st.session_state.current_test == "performance":
+        performance_tracker.show_performance_tracker()
     else:
         st.error("Unknown test type")
         st.session_state.current_test = None

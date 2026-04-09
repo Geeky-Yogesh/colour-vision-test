@@ -4,6 +4,7 @@ import random
 from datetime import datetime
 from .colour_vision_test import ColourVisionTest
 from .distance_guide import DistanceGuide
+from .performance_tracker import ScoreTracker
 
 def ishihara_test():
     """Ishihara test with dynamic random numbers and high-density rendering"""
@@ -14,6 +15,9 @@ def ishihara_test():
     
     # Show distance reminder
     DistanceGuide.show_distance_reminder("Ishihara Plates") 
+    
+    # Initialize performance tracking
+    ScoreTracker.initialize_session()
     
     # 1. Check if test is finished
     if st.session_state.ishihara_current_round >= TOTAL_ROUNDS:
@@ -82,11 +86,32 @@ def ishihara_test():
         
         col1, col2 = st.columns(2)
         if col1.form_submit_button("Submit & Next", width='stretch'):
+            # Track answer
+            shown_value = st.session_state.ishihara_shown_values[curr_round]
+            is_correct = str(user_input).strip() == str(shown_value).strip()
+            
+            ScoreTracker.add_ishihara_result(
+                curr_round + 1,
+                shown_value,
+                user_input,
+                is_correct
+            )
+            
             st.session_state.ishihara_answers.append(user_input)
             st.session_state.ishihara_current_round += 1
             st.rerun()
             
         if col2.form_submit_button("I can't see a number", width='stretch'):
+            # Track incorrect answer
+            shown_value = st.session_state.ishihara_shown_values[curr_round]
+            
+            ScoreTracker.add_ishihara_result(
+                curr_round + 1,
+                shown_value,
+                "None",
+                False
+            )
+            
             st.session_state.ishihara_answers.append("None")
             st.session_state.ishihara_current_round += 1
             st.rerun()
@@ -151,6 +176,9 @@ def show_random_ishihara_results(total_rounds):
     # Detailed Table
     st.table(detailed_data)
 
+    # End performance tracking session
+    ScoreTracker.end_session()
+    
     # Save to session history (only once)
     if not st.session_state.results_saved:
         st.session_state.test_results.append({
