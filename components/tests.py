@@ -3,13 +3,17 @@ import plotly.graph_objects as go
 import random
 from datetime import datetime
 from .colour_vision_test import ColourVisionTest
+from .distance_guide import DistanceGuide
 
 def ishihara_test():
     """Ishihara test with dynamic random numbers and high-density rendering"""
-    st.title("🔢 Random Ishihara Plates Test")
+    st.title(" Random Ishihara Plates Test")
     
     # Configuration
     TOTAL_ROUNDS = 8 
+    
+    # Show distance reminder
+    DistanceGuide.show_distance_reminder("Ishihara Plates") 
     
     # 1. Check if test is finished
     if st.session_state.ishihara_current_round >= TOTAL_ROUNDS:
@@ -62,8 +66,14 @@ def ishihara_test():
         margin=dict(l=0, r=0, t=0, b=0)
     )
     
-    # Display the plate
-    st.plotly_chart(fig, config={'displayModeBar': False}, width='content')
+    # Display the plate with distance overlay
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.plotly_chart(fig, config={'displayModeBar': False}, width='content')
+    with col2:
+        if st.button(" Position Guide"):
+            overlay_fig = DistanceGuide.show_distance_overlay()
+            st.plotly_chart(overlay_fig, config={'displayModeBar': False}, width='content')
 
     # 6. Input Form
     with st.form(key=f"ishihara_round_{curr_round}"):

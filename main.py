@@ -7,6 +7,8 @@ import streamlit as st
 from components.ui import main_menu
 from components.tests import ishihara_test
 from components.results import show_results
+from components.webcam_test import webcam_test
+from components.distance_guide import distance_settings_page
 from components.config import configure_page, init_session_state
 
 def sidebar_navigation():
@@ -29,14 +31,22 @@ def sidebar_navigation():
             st.session_state.results_saved = False
             st.rerun()
         
-        if st.button("📊 Results", width='stretch'):
+        if st.button(" Results", width='stretch'):
             st.session_state.current_test = "results"
+            st.rerun()
+        
+        if st.button(" Webcam Test", width='stretch'):
+            st.session_state.current_test = "webcam"
+            st.rerun()
+        
+        if st.button(" Distance Settings", width='stretch'):
+            st.session_state.current_test = "distance"
             st.rerun()
         
         st.markdown("---")
         
         # Session info
-        st.subheader("📋 Session Info")
+        st.subheader("")
         st.info(f"""
         **Current Test:** {st.session_state.current_test or 'None'}
         
@@ -85,6 +95,10 @@ def main():
         ishihara_test()
     elif st.session_state.current_test == "results":
         show_results()
+    elif st.session_state.current_test == "webcam":
+        webcam_test()
+    elif st.session_state.current_test == "distance":
+        distance_settings_page()
     else:
         st.error("Unknown test type")
         st.session_state.current_test = None
