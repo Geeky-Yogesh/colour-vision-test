@@ -117,7 +117,7 @@ class DistanceGuide:
             height=300
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     
     @staticmethod
     def show_distance_reminder(test_type="Ishihara"):

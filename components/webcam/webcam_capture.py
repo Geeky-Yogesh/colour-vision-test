@@ -1,29 +1,46 @@
 """
-Webcam Capture Module - Handle real and simulated webcam feeds
+Webcam Capture Module - Handle real and simulated webcam feeds with face tracking
 """
 
 import cv2
 import numpy as np
 import streamlit as st
+from .face_tracking import FaceTracker
 
 class WebcamCapture:
     """Handle webcam capture and display"""
     
-    @staticmethod
-    def display_real_webcam_feed(placeholder):
-        """Display real webcam feed with color vision testing"""
+    def __init__(self):
+        """Initialize webcam capture with face tracking"""
+        self.face_tracker = FaceTracker()
+    
+    def display_real_webcam_feed(self, placeholder, enable_face_tracking=True):
+        """Display real webcam feed with optional face tracking - continuous capture"""
         
-        # Initialize webcam
-        cap = cv2.VideoCapture(0)
+        # Initialize webcam if not already initialized
+        if 'webcam_cap' not in st.session_state:
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                placeholder.error("Unable to access webcam. Please check permissions.")
+                return None
+            st.session_state.webcam_cap = cap
+        else:
+            cap = st.session_state.webcam_cap
         
-        if not cap.isOpened():
-            placeholder.error("Unable to access webcam. Please check permissions.")
-            return None
-        
-        # Capture frame
+        # Capture frame continuously
         ret, frame = cap.read()
         
         if ret:
+            # Apply face tracking if enabled
+            if enable_face_tracking:
+                face_data = self.face_tracker.detect_face(frame)
+                if face_data:
+                    frame = self.face_tracker.draw_tracking_overlay(frame, face_data)
+                    # Store current metrics in session state
+                    st.session_state.face_metrics = face_data['metrics']
+                else:
+                    st.session_state.face_metrics = None
+            
             # Add color vision test overlay
             from .webcam_ui import WebcamUI
             frame = WebcamUI.add_color_vision_overlay(frame)
@@ -31,18 +48,20 @@ class WebcamCapture:
             # Convert to RGB for display
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             
-            # Display frame
-            placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+            # Display frame with continuous refresh
+            placeholder.image(frame_rgb, channels="RGB", width='stretch')
             
             # Store frame for capture
             st.session_state.current_frame = frame
+            
+            # Auto-refresh for real-time feed
+            st.rerun()
             return frame
-        
-        cap.release()
-        return None
+        else:
+            placeholder.error("Failed to capture frame from webcam")
+            return None
     
-    @staticmethod
-    def display_simulated_feed(placeholder):
+    def display_simulated_feed(self, placeholder, enable_face_tracking=True):
         """Display simulated webcam feed (fallback if webcam not available)"""
         
         # Create a simulated frame
@@ -61,11 +80,10 @@ class WebcamCapture:
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
         # Display frame
-        placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+        placeholder.image(frame_rgb, channels="RGB", width='stretch')
         return frame
     
-    @staticmethod
-    def capture_frame():
+    def capture_frame(self):
         """Capture current frame for analysis"""
         # Try to capture from real webcam first
         cap = cv2.VideoCapture(0)
@@ -75,6 +93,14 @@ class WebcamCapture:
             cap.release()
             
             if ret:
+                # Apply face tracking
+                face_data = self.face_tracker.detect_face(frame)
+                if face_data:
+                    frame = self.face_tracker.draw_tracking_overlay(frame, face_data)
+                    st.session_state.captured_face_metrics = face_data['metrics']
+                else:
+                    st.session_state.captured_face_metrics = None
+                
                 # Add color test overlay
                 from .webcam_ui import WebcamUI
                 frame = WebcamUI.add_color_vision_overlay(frame)
@@ -95,3 +121,23 @@ class WebcamCapture:
         from .color_analysis import ColorAnalysis
         ColorAnalysis.perform_color_analysis(frame)
         return frame
+    
+    def get_face_tracker(self):
+        """Get the face tracker instance"""
+        return self.face_tracker
+    
+    def reset_tracking(self):
+        """Reset face tracking state"""
+        self.face_tracker.reset_tracking()
+    
+    def release_webcam(self):
+        """Release webcam resource"""
+        if 'webcam_cap' in st.session_state:
+            st.session_state.webcam_cap.release()
+            del st.session_state.webcam_cap
+    
+    def release(self):
+        """Release resources"""
+        self.release_webcam()
+        if hasattr(self, 'face_tracker'):
+            self.face_tracker.release()

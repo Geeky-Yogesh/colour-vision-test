@@ -45,11 +45,19 @@ class WebcamUI:
                 if not st.session_state.webcam_active:
                     st.session_state.captured_frame = None
                     st.session_state.color_analysis = None
+                    st.session_state.face_metrics = None
+                    # Release webcam when stopping
+                    if 'webcam_capture_instance' in st.session_state:
+                        st.session_state.webcam_capture_instance.release_webcam()
+            
+            # Face tracking toggle
+            face_tracking_enabled = st.checkbox(" Enable Face Tracking", value=True)
+            st.session_state.face_tracking_enabled = face_tracking_enabled
             
             # Test mode selection
             test_mode = st.selectbox(
                 "Test Mode:",
-                ["Color Recognition", "Color Matching", "Live Analysis"]
+                ["Face Tracking", "Color Recognition", "Color Matching", "Live Analysis"]
             )
             
             st.markdown("---")
@@ -67,7 +75,14 @@ class WebcamUI:
     def show_test_instructions(test_mode):
         """Show instructions based on test mode"""
         
-        if test_mode == "Color Recognition":
+        if test_mode == "Face Tracking":
+            st.subheader(" Real-time Face Tracking")
+            st.write("Face detection and head movement analysis with live metrics.")
+            
+            # Show real-time metrics
+            WebcamUI.show_face_metrics()
+            
+        elif test_mode == "Color Recognition":
             st.subheader("Color Recognition Test")
             st.write("Look at the colored objects around you and identify their colors.")
             
@@ -117,5 +132,81 @@ class WebcamUI:
             st.session_state.webcam_active = False
             st.session_state.captured_frame = None
             st.session_state.color_analysis = None
+            st.session_state.face_metrics = None
             st.session_state.current_test = None
+            # Release webcam resources
+            if 'webcam_capture_instance' in st.session_state:
+                st.session_state.webcam_capture_instance.release_webcam()
             st.rerun()
+    
+    @staticmethod
+    def show_face_metrics():
+        """Display real-time face tracking metrics"""
+        
+        # Check if face metrics are available
+        if 'face_metrics' in st.session_state and st.session_state.face_metrics:
+            metrics = st.session_state.face_metrics
+            
+            # Create metrics display
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric(
+                    "Position X", 
+                    f"{metrics.x:.1f}px",
+                    delta=f"{metrics.dx:.1f}" if abs(metrics.dx) > 0.1 else None
+                )
+            
+            with col2:
+                st.metric(
+                    "Position Y", 
+                    f"{metrics.y:.1f}px",
+                    delta=f"{metrics.dy:.1f}" if abs(metrics.dy) > 0.1 else None
+                )
+            
+            with col3:
+                st.metric(
+                    "Head Tilt", 
+                    f"{metrics.tilt_angle:.1f}°",
+                    delta=None
+                )
+            
+            # Movement indicators
+            st.markdown("### Movement Analysis")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Movement direction indicator
+                if abs(metrics.dx) > 2:
+                    direction = "→ Right" if metrics.dx > 0 else "← Left"
+                    st.info(f"Horizontal Movement: {direction}")
+                else:
+                    st.success("Horizontal: Stable")
+                
+                if abs(metrics.dy) > 2:
+                    direction = "↓ Down" if metrics.dy > 0 else "↑ Up"
+                    st.info(f"Vertical Movement: {direction}")
+                else:
+                    st.success("Vertical: Stable")
+            
+            with col2:
+                # Head position analysis
+                if abs(metrics.tilt_angle) > 5:
+                    tilt_direction = "Tilted Right" if metrics.tilt_angle > 0 else "Tilted Left"
+                    st.warning(f"Head Position: {tilt_direction}")
+                else:
+                    st.success("Head Position: Level")
+            
+            # Face detection status
+            st.markdown("### Detection Status")
+            if metrics.confidence > 0.7:
+                st.success("✅ Face Detected - High Confidence")
+            elif metrics.confidence > 0.5:
+                st.warning("⚠️ Face Detected - Medium Confidence")
+            else:
+                st.error("❌ Low Confidence Detection")
+                
+        else:
+            st.info("🔍 Waiting for face detection...")
+            st.write("Position your face in front of the camera for tracking to begin.")
