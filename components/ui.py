@@ -23,8 +23,22 @@ def main_menu():
             st.rerun()
     
     with col2:
-        if st.button("📊 View Results", width='stretch'):
+        if st.button("📊 Performance Tracker", width='stretch'):
+            st.session_state.current_test = "performance"
+            st.rerun()
+    
+    # Additional options
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📈 View Results", width='stretch'):
             st.session_state.current_test = "results"
+            st.rerun()
+    
+    with col2:
+        if st.button("⚙️ Distance Settings", width='stretch'):
+            st.session_state.current_test = "distance"
             st.rerun()
     
     # Information
@@ -36,6 +50,11 @@ def main_menu():
     - Identifies red-green colour blindness
     - Uses dot patterns with hidden numbers
     - Quick screening test (8 plates)
+    
+    **Performance Tracker:**
+    - Detailed analytics of test results
+    - Progress monitoring over time
+    - Personalized recommendations
     
     This test helps detect common forms of colour vision deficiency by presenting 
     patterns of colored dots that form numbers visible to people with normal colour vision 

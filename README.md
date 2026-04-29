@@ -10,7 +10,14 @@ A Python application that implements colour vision tests to help detect colour v
 - Detects red-green colour blindness
 - Provides detailed analysis of results
 
-### 2. Results Management
+### 2. Performance Tracker
+- Comprehensive analytics dashboard
+- Progress monitoring over time
+- Session comparison and trends
+- Personalized recommendations
+- Export capabilities for data analysis
+
+### 3. Results Management
 - Stores test results with timestamps
 - View detailed results and analysis
 - Track performance over multiple tests
@@ -21,9 +28,16 @@ A Python application that implements colour vision tests to help detect colour v
 - Streamlit 1.28.0 or higher
 - Plotly 5.15.0 or higher
 - Pandas 1.5.0 or higher
+- NumPy 1.24.0 or higher
 
 ## Installation
 
+### Using uv (Recommended):
+```bash
+uv run streamlit run main.py
+```
+
+### Using pip:
 1. Clone or download the project
 2. Navigate to the project directory
 3. Install dependencies:
@@ -31,7 +45,6 @@ A Python application that implements colour vision tests to help detect colour v
 pip install -r requirements.txt
 ```
 4. Run the application:
-
 ```bash
 streamlit run main.py
 ```
@@ -39,9 +52,11 @@ streamlit run main.py
 ## How to Use
 
 ### Starting the Application
-Run the script and you'll see the main menu with two options:
+Run the script and you'll see the main menu with options:
 - Ishihara Plates Test
+- Performance Tracker
 - View Results
+- Distance Settings
 
 ### Ishihara Plates Test
 1. Click "Ishihara Plates Test"
@@ -51,6 +66,12 @@ Run the script and you'll see the main menu with two options:
 5. Skip plates if you cannot see any number
 6. View your results at the end
 
+### Performance Tracker
+1. Click "Performance Tracker" from main menu or sidebar
+2. View comprehensive analytics across all test sessions
+3. Monitor progress with interactive charts
+4. Compare performance over time
+5. Export data for external analysis
 
 ### Viewing Results
 - Click "View Results" from the main menu

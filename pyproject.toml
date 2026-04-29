@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "colour-vision-test"
+version = "0.1.0"
+description = "A Python application that implements colour vision tests to help detect colour vision deficiencies"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "streamlit>=1.28.0",
+    "plotly>=5.15.0",
+    "pandas>=1.5.0",
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+    "mediapipe>=0.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
