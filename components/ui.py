@@ -37,7 +37,7 @@ def main_menu():
             st.rerun()
     
     with col2:
-        if st.button("📈 View Results", width='stretch', key="menu_results"):
+        if st.button("� View Results", width='stretch', key="menu_results"):
             st.session_state.current_test = "results"
             st.rerun()
     
@@ -50,8 +50,8 @@ def main_menu():
             st.rerun()
     
     with col2:
-        if st.button("📊 Performance Tracker", width='stretch', key="menu_performance_alt"):
-            st.session_state.current_test = "performance"
+        if st.button("� Tritan (Blue-Yellow) Test", width='stretch', key="menu_tritan"):
+            st.session_state.current_test = "tritan"
             st.rerun()
     
     # Information

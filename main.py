@@ -12,6 +12,7 @@ from components.distance_guide import distance_settings_page
 from components.performance_tracker import performance_tracker
 from components.webcam_live import webcam_live_page
 from components.hue_arrangement import hue_arrangement_page
+from components.tritan_test import tritan_test_page
 from components.config import configure_page, init_session_state
 
 def sidebar_navigation():
@@ -48,6 +49,10 @@ def sidebar_navigation():
         
         if st.button("🌈 Hue Arrangement Test", width='stretch'):
             st.session_state.current_test = "hue_arrangement"
+            st.rerun()
+        
+        if st.button("💠 Tritan Test", width='stretch'):
+            st.session_state.current_test = "tritan"
             st.rerun()
         
         if st.button(" Performance Tracker", width='stretch'):
@@ -131,6 +136,8 @@ def main():
         distance_settings_page()
     elif st.session_state.current_test == "hue_arrangement":
         hue_arrangement_page()
+    elif st.session_state.current_test == "tritan":
+        tritan_test_page()
     elif st.session_state.current_test == "performance":
         performance_tracker.show_performance_tracker()
     else:
