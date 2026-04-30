@@ -6,6 +6,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
+from .utils.pdf_generator import generate_pdf_report
 
 def show_results():
     """Show all test results"""
@@ -58,6 +59,22 @@ def show_results():
                 labels={"x": "Test Number", "y": "Score (%)"}
             )
             st.plotly_chart(fig, width='stretch')
+    
+    # PDF DOWNLOAD SECTION
+    st.markdown("### 📄 Export Report")
+    st.markdown("Generate a professional PDF report of your test results.")
+    
+    pdf_bytes = generate_pdf_report(st.session_state.test_results)
+    
+    st.download_button(
+        label="📥 Download Professional PDF Report",
+        data=pdf_bytes,
+        file_name=f"Vision_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
+    
+    st.markdown("---")
     
     # Clear results button
     if st.button("🗑️ Clear All Results", type="secondary"):
