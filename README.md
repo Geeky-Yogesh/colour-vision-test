@@ -17,7 +17,14 @@ A Python application that implements colour vision tests to help detect colour v
 - Personalized recommendations
 - Export capabilities for data analysis
 
-### 3. Results Management
+### 3. Real-Time Webcam Distance Calibration
+- Live camera feed with distance detection
+- Real-time position monitoring during tests
+- Color-coded distance indicators (Green/Orange/Yellow)
+- Sidebar monitor for continuous distance tracking
+- Automatic calibration for accurate measurements
+
+### 4. Results Management
 - Stores test results with timestamps
 - View detailed results and analysis
 - Track performance over multiple tests
@@ -29,6 +36,9 @@ A Python application that implements colour vision tests to help detect colour v
 - Plotly 5.15.0 or higher
 - Pandas 1.5.0 or higher
 - NumPy 1.24.0 or higher
+- OpenCV (cv2) for computer vision
+- MediaPipe for face detection
+- streamlit-webrtc for real-time video processing
 
 ## Installation
 
@@ -56,6 +66,7 @@ Run the script and you'll see the main menu with options:
 - Ishihara Plates Test
 - Performance Tracker
 - View Results
+- Webcam Distance Calibration
 - Distance Settings
 
 ### Ishihara Plates Test
@@ -72,6 +83,17 @@ Run the script and you'll see the main menu with options:
 3. Monitor progress with interactive charts
 4. Compare performance over time
 5. Export data for external analysis
+
+### Webcam Distance Calibration
+1. Click "Webcam Test" from the sidebar
+2. Click "Start" to enable your camera
+3. Position yourself until the indicator turns **Green** (65-85cm range)
+4. The system provides real-time feedback:
+   - **Orange**: Too Close (< 65cm)
+   - **Green**: Perfect Distance (65-85cm)
+   - **Yellow**: Too Far (> 85cm)
+5. Click "I am positioned correctly" to start the test
+6. During Ishihara tests, a sidebar monitor ensures you maintain proper distance
 
 ### Viewing Results
 - Click "View Results" from the main menu
@@ -107,7 +129,9 @@ Colour-Vision/
     ├── colour_vision_test.py   # Core test logic
     ├── ui.py                   # Main menu and navigation
     ├── tests.py                # Test implementations
-    └── results.py              # Results display and analysis
+    ├── results.py              # Results display and analysis
+    ├── webcam_live.py          # Real-time webcam distance calibration
+    └── distance_guide.py       # Distance settings and calibration
 ```
 
 ### Key Components
@@ -121,9 +145,19 @@ Colour-Vision/
 - **Streamlit**: Web application framework
 - **Plotly**: Interactive charts and visualizations
 - **Pandas**: Data manipulation and analysis
+- **OpenCV**: Computer vision and face detection
+- **MediaPipe**: Advanced face landmark detection
+- **streamlit-webrtc**: Real-time video streaming
 
 ### Colour Generation
 The application uses the `colorsys` module to generate realistic colour distributions for the tests, simulating the actual colour patterns used in professional colour vision tests.
+
+### Distance Detection Algorithm
+The webcam component uses computer vision to estimate user distance:
+- **Face Detection**: OpenCV Haar cascade classifier detects faces
+- **Distance Calculation**: Uses the formula `Distance = (Known_Face_Width × Focal_Length) / Pixel_Width`
+- **Real-time Processing**: Processes video frames at 30 FPS for smooth feedback
+- **Calibration**: Focal length is calibrated for accurate distance measurements
 
 ## Contributing
 

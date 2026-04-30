@@ -10,6 +10,7 @@ from components.results import show_results
 # from components.webcam import webcam_test  # Webcam features removed
 from components.distance_guide import distance_settings_page
 from components.performance_tracker import performance_tracker
+from components.webcam_live import webcam_live_page
 from components.config import configure_page, init_session_state
 
 def sidebar_navigation():
@@ -36,9 +37,9 @@ def sidebar_navigation():
             st.session_state.current_test = "results"
             st.rerun()
         
-        # if st.button(" Webcam Test", width='stretch'):
-        #     st.session_state.current_test = "webcam"
-        #     st.rerun()
+        if st.button("📷 Webcam Test", width='stretch'):
+            st.session_state.current_test = "webcam"
+            st.rerun()
         
         if st.button(" Distance Settings", width='stretch'):
             st.session_state.current_test = "distance"
@@ -64,6 +65,24 @@ def sidebar_navigation():
                 del st.session_state[key]
             init_session_state()
             st.rerun()
+        
+        # Add the Live Monitor if the test is active
+        if st.session_state.current_test == "ishihara":
+            st.markdown("---")
+            st.subheader("👤 Live Monitor")
+            # This puts a small version of the webcam in the sidebar
+            from components.webcam_live import DistanceProcessor
+            from streamlit_webrtc import webrtc_streamer, RTCConfiguration
+            
+            webrtc_streamer(
+                key="sidebar-monitor",
+                video_processor_factory=DistanceProcessor,
+                rtc_configuration=RTCConfiguration(
+                    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+                ),
+                media_stream_constraints={"video": {"width": 300}, "audio": False},
+            )
+            st.caption("Stay in the Green zone for accuracy!")
         
         st.markdown("---")
         
@@ -101,8 +120,8 @@ def main():
         ishihara_test()
     elif st.session_state.current_test == "results":
         show_results()
-    # elif st.session_state.current_test == "webcam":
-    #     webcam_test()
+    elif st.session_state.current_test == "webcam":
+        webcam_live_page()
     elif st.session_state.current_test == "distance":
         distance_settings_page()
     elif st.session_state.current_test == "performance":
