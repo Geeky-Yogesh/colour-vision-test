@@ -23,13 +23,38 @@ def show_results():
     # Summary statistics
     st.subheader("Summary")
     total_tests = len(st.session_state.test_results)
-    ishihara_tests = len([r for r in st.session_state.test_results if r['test_type'] == 'Ishihara Plates'])
     
+    # Count tests by type
+    ishihara_tests = len([r for r in st.session_state.test_results if 'Ishihara' in r['test_type']])
+    tritan_tests = len([r for r in st.session_state.test_results if 'Tritan' in r['test_type']])
+    hue_tests = len([r for r in st.session_state.test_results if 'Hue' in r['test_type']])
+    
+    # Calculate average scores by test type
+    ishihara_scores = [r for r in st.session_state.test_results if 'Ishihara' in r['test_type']]
+    tritan_scores = [r for r in st.session_state.test_results if 'Tritan' in r['test_type']]
+    hue_scores = [r for r in st.session_state.test_results if 'Hue' in r['test_type']]
+    
+    # Display test counts with latest results
+    st.write("### Test Summary")
+    
+    if ishihara_tests > 0:
+        latest_ishihara = ishihara_scores[-1]
+        st.write(f"- Random Ishihara: {latest_ishihara['result']} (Score: {latest_ishihara['score']}) - **{ishihara_tests} test{'s' if ishihara_tests != 1 else ''}**")
+    
+    if hue_tests > 0:
+        latest_hue = hue_scores[-1]
+        st.write(f"- Hue Arrangement: {latest_hue['result']} (Score: {latest_hue['score']}) - **{hue_tests} test{'s' if hue_tests != 1 else ''}**")
+    
+    if tritan_tests > 0:
+        latest_tritan = tritan_scores[-1]
+        st.write(f"- Tritan (Blue-Yellow): {latest_tritan['result']} (Score: {latest_tritan['score']}) - **{tritan_tests} test{'s' if tritan_tests != 1 else ''}**")
+    
+    # Overall metrics
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Total Tests", total_tests)
     with col2:
-        st.metric("Ishihara Tests", ishihara_tests)
+        st.metric("Test Types Completed", len([t for t in [ishihara_tests, tritan_tests, hue_tests] if t > 0]))
     
     # Results table
     st.subheader("All Results")
