@@ -46,10 +46,24 @@ A Python application that implements colour vision tests to help detect colour v
 ## Installation
 
 ### Using uv (Recommended):
+`uv` is a modern, fast Python package manager that automatically handles virtual environments and dependency installation.
+
 ```bash
-# Install dependencies and run the application
+# Install uv (if not already installed)
+pip install uv
+
+# Run the application - uv automatically:
+# 1. Creates a virtual environment
+# 2. Installs all dependencies from pyproject.toml
+# 3. Runs the Streamlit application
 uv run streamlit run main.py
 ```
+
+**Benefits of using uv:**
+- Automatic virtual environment management
+- Fast dependency resolution and installation
+- No manual pip install required
+- Consistent environments across different machines
 
 ### Using pip:
 1. Clone or download the project
