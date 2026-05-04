@@ -23,7 +23,7 @@ def tritan_test_page():
     st.write(f"### Plate {curr + 1} of {TOTAL_ROUNDS}")
 
     if len(st.session_state.tritan_shown) <= curr:
-        st.session_state.tritan_shown.append(random.randint(1, 9))
+        st.session_state.tritan_shown.append(random.randint(1, 99))
     
     target = st.session_state.tritan_shown[curr]
     bg_dots, num_dots = TritanLogic.get_plate(target)
@@ -34,11 +34,18 @@ def tritan_test_page():
         fig.add_trace(go.Scatter(x=x, y=y, mode='markers', marker=dict(size=s, color=c, line=dict(width=0)), hoverinfo='none'))
 
     fig.update_layout(
-        width=500, height=500, showlegend=False,
-        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        width=500, height=500, 
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)', 
+        paper_bgcolor='rgba(0,0,0,0)',
         xaxis=dict(visible=False, range=[0, 100], fixedrange=True),
-        # FIX FOR BULGING:
-        yaxis=dict(visible=False, range=[0, 100], fixedrange=True, scaleanchor="x", scaleratio=1), 
+        yaxis=dict(
+            visible=False, 
+            range=[0, 100], 
+            fixedrange=True, 
+            scaleanchor="x", # This keeps the circle perfectly round
+            scaleratio=1
+        ),
         margin=dict(l=0, r=0, t=0, b=0)
     )
     st.plotly_chart(fig, config={'displayModeBar': False})
