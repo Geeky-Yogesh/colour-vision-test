@@ -63,4 +63,8 @@ def generate_pdf_report(results, performance_data=None):
     pdf.multi_cell(0, 6, "DISCLAIMER: This report is for screening purposes only and does not constitute a medical diagnosis. Please consult a healthcare professional for accurate assessment.")
 
     # Return PDF as bytes
-    return bytes(pdf.output(dest='S'))
+    pdf_output = pdf.output(dest='S')
+    if isinstance(pdf_output, str):
+        return pdf_output.encode('latin1')
+    else:
+        return bytes(pdf_output)
