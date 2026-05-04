@@ -195,5 +195,5 @@ def show_random_ishihara_results(total_rounds):
         st.session_state.ishihara_shown_values = []
         st.session_state.results_saved = False
         st.session_state.current_test = None
-        st.session_state.test_results = []
+        # st.session_state.test_results = []  <-- DELETE OR COMMENT OUT THIS LINE
         st.rerun()

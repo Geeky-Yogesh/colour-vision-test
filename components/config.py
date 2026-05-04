@@ -33,3 +33,7 @@ def init_session_state():
         st.session_state.ishihara_shown_values = []
     if 'results_saved' not in st.session_state:
         st.session_state.results_saved = False
+    
+    # ADD THIS LINE:
+    if 'tritan_results_saved' not in st.session_state:
+        st.session_state.tritan_results_saved = False

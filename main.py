@@ -53,6 +53,11 @@ def sidebar_navigation():
         
         if st.button("💠 Tritan Test", width='stretch'):
             st.session_state.current_test = "tritan"
+            # ADD THESE LINES to ensure a clean start every time:
+            st.session_state.tritan_round = 0
+            st.session_state.tritan_shown = []
+            st.session_state.tritan_answers = []
+            st.session_state.tritan_results_saved = False
             st.rerun()
         
         if st.button(" Performance Tracker", width='stretch'):

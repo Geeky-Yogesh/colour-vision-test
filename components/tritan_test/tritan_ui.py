@@ -53,16 +53,35 @@ def tritan_test_page():
 def show_results(total):
     correct = sum(1 for s, a in zip(st.session_state.tritan_shown, st.session_state.tritan_answers) if str(s) == str(a))
     accuracy = (correct / total) * 100
+    diagnosis = "Normal" if accuracy >= 80 else "Deficient"
+    
     st.metric("Tritan Accuracy", f"{accuracy:.1f}%")
     
-    if st.button("Finish and Back to Menu"):
-        # Save to history
+    # --- NEW SAVING LOGIC (Outside the button) ---
+    if not st.session_state.tritan_results_saved:
+        # 1. Update Global Results History
         st.session_state.test_results.append({
             "test_type": "Tritan (Blue-Yellow)",
-            "result": "Normal" if accuracy >= 80 else "Deficient",
+            "result": diagnosis,
             "score": f"{accuracy:.1f}%",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
+        
+        # 2. Update Performance Tracker (ScoreTracker)
+        ScoreTracker.initialize_session()
+        ScoreTracker.start_session("Tritan (Blue-Yellow)")
+        # Record the overall accuracy (as 0.0 to 1.0)
+        ScoreTracker.add_score(accuracy / 100, {"diagnosis": diagnosis})
+        ScoreTracker.end_session()
+        
+        st.session_state.tritan_results_saved = True
+    # ----------------------------------------------
+
+    if st.button("Finish and Back to Menu"):
+        # Reset Tritan state for next time
         st.session_state.tritan_round = 0
+        st.session_state.tritan_shown = []
+        st.session_state.tritan_answers = []
+        st.session_state.tritan_results_saved = False # Reset flag
         st.session_state.current_test = None
         st.rerun()
