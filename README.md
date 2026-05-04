@@ -39,11 +39,15 @@ A Python application that implements colour vision tests to help detect colour v
 - OpenCV (cv2) for computer vision
 - MediaPipe for face detection
 - streamlit-webrtc for real-time video processing
+- fpdf for PDF report generation
+- tornado for webRTC support
+- streamlit-sortables for UI components
 
 ## Installation
 
 ### Using uv (Recommended):
 ```bash
+# Install dependencies and run the application
 uv run streamlit run main.py
 ```
 
@@ -57,6 +61,12 @@ pip install -r requirements.txt
 4. Run the application:
 ```bash
 streamlit run main.py
+```
+
+### Manual Installation:
+If you encounter dependency issues, you can install packages manually:
+```bash
+pip install streamlit plotly pandas numpy opencv-python mediapipe fpdf streamlit-webrtc tornado streamlit-sortables
 ```
 
 ## How to Use
@@ -107,6 +117,38 @@ Run the script and you'll see the main menu with options:
 - **Mild Colour Vision Deficiency**: 40-79% correct answers
 - **Significant Colour Vision Deficiency**: <40% correct answers
 
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Build Errors
+If you encounter build errors with hatchling, ensure the `pyproject.toml` file includes the correct build configuration:
+
+```toml
+[tool.hatch.build.targets.wheel]
+packages = ["components"]
+```
+
+#### Missing Dependencies
+If you see `ModuleNotFoundError` for any of the following packages:
+- `fpdf`: Install with `pip install fpdf`
+- `streamlit_webrtc`: Install with `pip install streamlit-webrtc`
+- `tornado`: Install with `pip install tornado`
+- `streamlit_sortables`: Install with `pip install streamlit-sortables`
+
+#### PDF Generation Issues
+If you encounter PDF generation errors, ensure you're using a compatible version of fpdf. The application has been tested with fpdf 1.7.2.
+
+#### Webcam Access Issues
+- Ensure your browser has camera permissions
+- Check that no other applications are using the camera
+- Try refreshing the page if webcam doesn't initialize
+
+#### Performance Issues
+- Close unnecessary browser tabs
+- Ensure good lighting conditions for webcam distance detection
+- Use a modern browser (Chrome, Firefox, Safari) for best performance
 
 ## Important Notes
 
