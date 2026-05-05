@@ -87,6 +87,30 @@ class ScoreTracker:
         ScoreTracker.add_score(score, details)
     
     @staticmethod
+    def add_plate_result(plate_number: int, shown_value: str, user_answer: str, is_correct: bool):
+        """Generic method to add detail for any plate-based test"""
+        if 'performance_data' not in st.session_state:
+            ScoreTracker.initialize_session()
+        
+        if 'current_session' not in st.session_state.performance_data or st.session_state.performance_data['current_session'] is None:
+            return # Session must be started by the UI first
+
+        details = {
+            'plate_number': plate_number,
+            'shown_value': shown_value,
+            'user_answer': user_answer,
+            'is_correct': is_correct
+        }
+        
+        # We add it to the details list of the current session
+        st.session_state.performance_data['current_session']['details'].append(details)
+        # Also add a raw score (1 or 0) for the session average
+        st.session_state.performance_data['current_session']['scores'].append({
+            'timestamp': datetime.now(),
+            'score': 1.0 if is_correct else 0.0
+        })
+    
+    @staticmethod
     def end_session():
         """End current session and update statistics"""
         if 'performance_data' not in st.session_state:

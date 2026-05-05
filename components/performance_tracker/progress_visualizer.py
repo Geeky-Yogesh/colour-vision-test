@@ -264,19 +264,15 @@ class ProgressVisualizer:
             # Create detailed table
             details_df = pd.DataFrame(session['details'])
             
-            if 'plate_number' in details_df.columns:
-                # Ishihara test specific view
+            # Ensure Result column is pretty
+            if 'is_correct' in details_df.columns:
                 details_df['Result'] = details_df['is_correct'].apply(
                     lambda x: '✅ Correct' if x else '❌ Incorrect'
                 )
-                
-                st.dataframe(
-                    details_df[['plate_number', 'shown_value', 'user_answer', 'Result']],
-                    use_container_width=True
-                )
-            else:
-                # General test view
-                st.dataframe(details_df, use_container_width=True)
+            
+            # Filter columns to show only what we need
+            display_cols = [c for c in ['plate_number', 'shown_value', 'user_answer', 'Result'] if c in details_df.columns]
+            st.dataframe(details_df[display_cols], width='stretch')
         
         # Score distribution
         if len(session['scores']) > 1:
