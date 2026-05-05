@@ -83,6 +83,10 @@ If you encounter dependency issues, you can install packages manually:
 pip install streamlit plotly pandas numpy opencv-python mediapipe fpdf streamlit-webrtc tornado streamlit-sortables
 ```
 
+```bash
+uv run streamlit run main.py
+```
+
 ## How to Use
 
 ### Starting the Application
