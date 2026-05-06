@@ -84,14 +84,14 @@ def sidebar_navigation():
         # Add the Live Monitor if the test is active
         if st.session_state.current_test == "ishihara":
             st.markdown("---")
-            st.subheader("👤 Live Monitor")
+            st.subheader("👤 Gaze Monitor")
             # This puts a small version of the webcam in the sidebar
-            from components.webcam_live import DistanceProcessor
+            from components.webcam_live import AdvancedVisionProcessor
             from streamlit_webrtc import webrtc_streamer, RTCConfiguration
             
             webrtc_streamer(
                 key="sidebar-monitor",
-                video_processor_factory=DistanceProcessor,
+                video_processor_factory=AdvancedVisionProcessor,
                 rtc_configuration=RTCConfiguration(
                     {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
                 ),

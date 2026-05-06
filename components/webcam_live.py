@@ -5,202 +5,161 @@ import mediapipe as mp
 import numpy as np
 from collections import deque
 
-# RTC Configuration for STUN servers (required for web deployment)
-RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-)
-
 # Handle different MediaPipe versions
 try:
-    mp_face_detection = mp.solutions.face_detection
-    HAS_MEDIAPIPE_FACE_DETECTION = True
+    mp_face_mesh = mp.solutions.face_mesh
+    HAS_MEDIAPIPE_FACE_MESH = True
 except AttributeError:
-    # Fallback to OpenCV face detection if MediaPipe solutions is not available
-    HAS_MEDIAPIPE_FACE_DETECTION = False
+    # Fallback if MediaPipe face_mesh is not available
+    HAS_MEDIAPIPE_FACE_MESH = False
 
-class DistanceProcessor(VideoProcessorBase):
+class AdvancedVisionProcessor(VideoProcessorBase):
     def __init__(self):
-        # 1. High-accuracy detector
-        if HAS_MEDIAPIPE_FACE_DETECTION:
-            self.face_detector = mp_face_detection.FaceDetection(
-                model_selection=0, # 0 for short-range (within 2m), 1 for long-range
-                min_detection_confidence=0.6
+        # Calibration constants
+        self.REAL_EYE_DISTANCE_CM = 6.4  # Average adult interpupillary distance
+        self.FOCAL_LENGTH = 850          # Calibrated for typical laptop webcams
+        
+        # Smoothing buffers (averages the last 5 frames for stability)
+        self.dist_history = deque(maxlen=5)
+        self.gaze_history = deque(maxlen=5)
+        
+        # Initialize face mesh if available
+        if HAS_MEDIAPIPE_FACE_MESH:
+            self.face_mesh = mp_face_mesh.FaceMesh(
+                max_num_faces=1,
+                refine_landmarks=True, # Enables iris and eye-lid tracking
+                min_detection_confidence=0.6,
+                min_tracking_confidence=0.6
             )
-            self.use_opencv_fallback = False
+            self.use_advanced = True
         else:
-            # Fallback to OpenCV face detection if MediaPipe FaceDetection is not available
+            # Fallback to OpenCV face detection
             self.face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-            self.use_opencv_fallback = True
-        
-        # 2. Calibration constants
-        self.KNOWN_FACE_WIDTH_CM = 14.5  # Average adult face width
-        self.FOCAL_LENGTH = 700          # Approximate focal length for standard webcams
-        self.CREDIT_CARD_WIDTH_CM = 8.5  # Standard credit card width for calibration
-        
-        # 3. Temporal Smoothing (Buffer) - CRITICAL FOR STABILITY
-        # Without this: Text flashes "No face detected" and disappears when face detector misses
-        # With this: Software remembers last 10 frames (~0.3 seconds) and averages distance
-        # Result: Smooth, professional transitions between distance zones (green/orange/yellow)
-        self.distance_history = deque(maxlen=10)
-        
-        # 4. Environmental checks
-        self.brightness_warning = False
-        self.calibration_mode = False
-        self.calibration_samples = []
+            self.use_advanced = False
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
         h, w, _ = img.shape
         
-        # Environmental Check: Brightness Detection
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        avg_brightness = np.mean(gray)
-        self.brightness_warning = avg_brightness < 50  # Threshold for too dark
-        
-        # Face detection based on available method
-        distance_text = "Searching for face..."
-        color = (0, 0, 255) # Default Red
-        
-        # Add brightness warning if needed
-        if self.brightness_warning:
-            cv2.rectangle(img, (10, h-60), (400, h-20), (0, 0, 0), -1)
-            cv2.putText(img, "⚠️ Environment too dark for accuracy", (20, h-35), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+        status_color = (0, 0, 255) # Default Red
+        dist_text = "No Face Detected"
+        gaze_text = "---"
 
-        face_detected = False
-        face_data = None
-        
-        if self.use_opencv_fallback:
-            # Use OpenCV face detection
+        if self.use_advanced:
+            # Advanced MediaPipe Face Mesh processing
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            results = self.face_mesh.process(img_rgb)
+
+            if results.multi_face_landmarks:
+                mesh_coords = results.multi_face_landmarks[0].landmark
+                
+                # --- 1. ACCURATE DISTANCE (Inter-ocular) ---
+                # Landmark 33: Left Eye Inner, 263: Right Eye Inner
+                p1 = mesh_coords[33]
+                p2 = mesh_coords[263]
+                
+                # Calculate pixel distance between eyes
+                eye_dist_px = np.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2) * w
+                
+                # Distance Formula: D = (Real_W * Focal) / Pixel_W
+                current_dist = (self.REAL_EYE_DISTANCE_CM * self.FOCAL_LENGTH) / eye_dist_px
+                self.dist_history.append(current_dist)
+                avg_dist = sum(self.dist_history) / len(self.dist_history)
+
+                # --- 2. HEAD POSE / GAZE FIXATION ---
+                # We track the Nose Tip (1) relative to the Eye Midpoint
+                nose = mesh_coords[1]
+                eye_midpoint_x = (p1.x + p2.x) / 2
+                
+                # Rotation Check: Is the nose centered between the eyes?
+                # head_offset > 0.05 means the user is looking away or tilted
+                head_offset = abs(nose.x - eye_midpoint_x)
+                self.gaze_history.append(head_offset)
+                avg_gaze = sum(self.gaze_history) / len(self.gaze_history)
+
+                # --- 3. LOGIC FOR VALIDATION ---
+                is_dist_ok = 65 <= avg_dist <= 85
+                is_gaze_ok = avg_gaze < 0.04 # Tight threshold for center gaze
+                
+                if is_dist_ok and is_gaze_ok:
+                    status_color = (0, 255, 0) # Green (Perfect)
+                    dist_text = f"Distance: {avg_dist:.1f} cm (Good)"
+                    gaze_text = "Gaze: Fixated"
+                else:
+                    status_color = (0, 165, 255) # Orange (Adjusting)
+                    dist_text = f"Distance: {avg_dist:.1f} cm"
+                    gaze_text = "Gaze: LOOK AT CENTER" if not is_gaze_ok else "Gaze: OK"
+
+                # --- 4. VISUAL FEEDBACK OVERLAYS ---
+                # Draw Face Mesh Outline (subtle)
+                for idx in [33, 263, 1, 61, 291]: # Eyes, Nose, Mouth Corners
+                    pt = mesh_coords[idx]
+                    cv2.circle(img, (int(pt.x*w), int(pt.y*h)), 2, status_color, -1)
+
+                # Draw Status Box
+                cv2.rectangle(img, (10, 10), (420, 100), (0,0,0), -1) # Background
+                cv2.putText(img, dist_text, (20, 45), cv2.FONT_HERSHEY_DUPLEX, 0.7, status_color, 1)
+                cv2.putText(img, gaze_text, (20, 85), cv2.FONT_HERSHEY_DUPLEX, 0.7, status_color, 1)
+                
+                # Guide Circle
+                cv2.circle(img, (w//2, h//2), 120, (255, 255, 255), 1)
+        else:
+            # Fallback to basic OpenCV face detection
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             faces = self.face_detector.detectMultiScale(gray, 1.1, 4)
+            
             if len(faces) > 0:
-                face_detected = True
-                face_data = faces[0]  # (x, y, w, h)
-        else:
-            # Use MediaPipe face detection
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            results = self.face_detector.process(img_rgb)
-            if results.detections:
-                face_detected = True
-                face_data = results.detections[0]
-
-        if face_detected:
-            if self.use_opencv_fallback:
-                # OpenCV format: (x, y, w, h)
-                x, y, face_w, face_h = face_data
-            else:
-                # MediaPipe format: detection object with bounding box
-                detection = face_data
-                bbox = detection.location_data.relative_bounding_box
+                x, y, face_w, face_h = faces[0]
                 
-                # Convert relative coordinates to pixels
-                x = int(bbox.xmin * w)
-                y = int(bbox.ymin * h)
-                face_w = int(bbox.width * w)
-                face_h = int(bbox.height * h)
-            
-            # Estimate distance
-            current_dist = (self.KNOWN_FACE_WIDTH_CM * self.FOCAL_LENGTH) / face_w
-            self.distance_history.append(current_dist)
-            
-            # Calculate Smoothed Distance (Average of the buffer)
-            avg_distance = sum(self.distance_history) / len(self.distance_history)
-            
-            # Logic for Status
-            if 60 <= avg_distance <= 90:
-                status = "PERFECT"
-                color = (0, 255, 0) # Green
-            elif avg_distance < 60:
-                status = "TOO CLOSE"
-                color = (0, 165, 255) # Orange
-            else:
-                status = "TOO FAR"
-                color = (0, 255, 255) # Yellow
+                # Basic distance estimation using face width
+                current_dist = (14.5 * 850) / face_w  # Average face width 14.5cm
+                self.dist_history.append(current_dist)
+                avg_dist = sum(self.dist_history) / len(self.dist_history)
+                
+                # Basic validation logic
+                if 65 <= avg_dist <= 85:
+                    status_color = (0, 255, 0) # Green
+                    dist_text = f"Distance: {avg_dist:.1f} cm (Good)"
+                    gaze_text = "Position: OK"
+                else:
+                    status_color = (0, 165, 255) # Orange
+                    dist_text = f"Distance: {avg_dist:.1f} cm"
+                    gaze_text = "Position: ADJUST"
+                
+                # Draw basic feedback
+                cv2.rectangle(img, (x, y), (x + face_w, y + face_h), status_color, 2)
+                cv2.rectangle(img, (10, 10), (350, 80), (0,0,0), -1)
+                cv2.putText(img, dist_text, (20, 35), cv2.FONT_HERSHEY_DUPLEX, 0.6, status_color, 1)
+                cv2.putText(img, gaze_text, (20, 60), cv2.FONT_HERSHEY_DUPLEX, 0.6, status_color, 1)
 
-            distance_text = f"{status}: {avg_distance:.1f} cm"
-
-            # Visual Feedback: Rounded rectangle around face
-            cv2.rectangle(img, (x, y), (x + face_w, y + face_h), color, 2)
-            # Draw a 'fill' for the status text area
-            cv2.rectangle(img, (20, 20), (450, 80), (0,0,0), -1)
-        else:
-            # If face is lost, clear the history buffer slowly
-            if self.distance_history:
-                self.distance_history.popleft()
-
-        # Overlay text
-        cv2.putText(img, distance_text, (40, 60), 
-                    cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
+        # Draw Status Box
+        cv2.rectangle(img, (10, 10), (420, 100), (0,0,0), -1) # Background
+        cv2.putText(img, dist_text, (20, 45), cv2.FONT_HERSHEY_DUPLEX, 0.7, status_color, 1)
+        cv2.putText(img, gaze_text, (20, 85), cv2.FONT_HERSHEY_DUPLEX, 0.7, status_color, 1)
         
-        # Add a "Center Mask" guide - encourages users to stay centered
-        overlay = img.copy()
-        cv2.circle(overlay, (w//2, h//2), 150, (255, 255, 255), 2)
-        cv2.addWeighted(overlay, 0.3, img, 0.7, 0, img)
+        # Guide Circle
+        cv2.circle(img, (w//2, h//2), 120, (255, 255, 255), 1)
 
         return frame.from_ndarray(img, format="bgr24")
 
 def webcam_live_page():
-    st.title("🎥 Real-Time Distance Calibration")
-    
-    # Environmental Reliability Tips
-    with st.expander("🔧 Environmental Setup for Medical-Grade Accuracy", expanded=True):
-        st.markdown("""
-        **⚠️ Important Setup Requirements:**
-        
-        **1. Lighting Conditions:**
-        - ✅ Ensure light is on your face, not behind you
-        - ❌ Avoid bright windows or lights behind you (causes silhouette effect)
-        - ✅ Use even, frontal lighting for best face detection
-        - ⚠️ If environment is too dark, accuracy warning will appear
-        
-        **2. Camera Calibration (Recommended for 100% Accuracy):**
-        - 🎯 For medical-grade precision, calibrate with a credit card
-        - Hold a standard credit card (8.5cm width) to your camera once
-        - This adjusts the focal length for your specific camera
-        - Different cameras (MacBook vs USB webcam) have different focal lengths
-        
-        **3. Positioning:**
-        - Sit centered in the camera view
-        - Keep your face clearly visible
-        - Avoid dramatic shadows or backlighting
-        """)
-    
+    st.title("🔬 Advanced Vision Calibration")
     st.markdown("""
-    **Quick Instructions:**
-    1. Click 'Start' below to enable your camera
-    2. Follow the environmental setup tips above
-    3. Position yourself so the indicator turns **Green**
-    4. The box and text will change color based on your distance:
-       - <span style='color:orange'>**Orange**</span>: Too Close
-       - <span style='color:green'>**Green**</span>: Perfect (60-90cm)
-       - <span style='color:yellow'>**Yellow**</span>: Too Far
-    """, unsafe_allow_html=True)
+    **Validation Requirements:**
+    1. **Distance:** Must be between **65cm and 85cm**.
+    2. **Fixation:** You must look directly at the center of the screen.
+    3. **Lighting:** Ensure your face is evenly lit.
+    """)
 
-    # Calibration controls
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.info("🎯 For medical-grade accuracy, use credit card calibration below")
-    with col2:
-        if st.button("📏 Calibrate with Credit Card"):
-            st.session_state.calibration_mode = True
-            st.success("Hold a credit card (8.5cm) to your camera now")
-    
     webrtc_streamer(
-        key="distance-calibration",
-        video_processor_factory=DistanceProcessor,
-        rtc_configuration=RTC_CONFIGURATION,
+        key="vision-validator",
+        video_processor_factory=AdvancedVisionProcessor,
+        rtc_configuration=RTCConfiguration(
+            {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+        ),
         media_stream_constraints={"video": True, "audio": False},
     )
-    
-    # Browser permissions helper
-    st.caption("💡 Note: If the camera doesn't start, check your browser's site permissions and refresh.")
 
-    # Environmental status
-    processor = DistanceProcessor()
-    if hasattr(processor, 'brightness_warning') and processor.brightness_warning:
-        st.error("⚠️ Environment too dark for accurate distance detection")
-
-    if st.button("✅ I am positioned correctly. Start Test!"):
+    if st.button("🚀 Start Professional Assessment"):
         st.session_state.current_test = "ishihara"
         st.rerun()
