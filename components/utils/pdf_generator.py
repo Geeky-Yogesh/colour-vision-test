@@ -1,3 +1,4 @@
+# Use fpdf2 for PDF generation
 from fpdf import FPDF
 from datetime import datetime
 import io
