@@ -31,7 +31,7 @@ A Python application that implements colour vision tests to help detect colour v
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Streamlit 1.28.0 or higher
 - Plotly 5.15.0 or higher
 - Pandas 1.5.0 or higher
@@ -39,9 +39,14 @@ A Python application that implements colour vision tests to help detect colour v
 - OpenCV (cv2) for computer vision
 - MediaPipe for face detection
 - streamlit-webrtc for real-time video processing
-- fpdf for PDF report generation
+- fpdf2 for PDF report generation
 - tornado for webRTC support
 - streamlit-sortables for UI components
+
+### Development Tools (Optional):
+- pytest for testing
+- black for code formatting
+- flake8 for linting
 
 ## Installation
 
