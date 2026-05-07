@@ -18,7 +18,7 @@ class ColourVisionTest:
             # Standard Ishihara Colors: Greens vs Reds
             bg_palette = ['#228B22', '#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784']
             fg_palette = ['#FF0000', '#DC143C', '#B22222', '#FF4500', '#FF6347', '#CD5C5C']
-
+  
         # 1. Background Dots
         for _ in range(1200): 
             angle = random.uniform(0, 2 * math.pi)
